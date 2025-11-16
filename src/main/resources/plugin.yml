@@ -1,0 +1,4 @@
+name: DiscordRelay
+version: '1.0-SNAPSHOT'
+main: miguel.nu.discordRelay.Main
+api-version: '1.21'
