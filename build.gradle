@@ -53,3 +53,11 @@ processResources {
         expand props
     }
 }
+
+/* COPY JAR TO PLUGINS FOLDER */
+tasks.register('copyToPlugins', Copy) {
+    dependsOn build // Ensures the JAR is built first
+    from("${buildDir}/libs") // Gradle places the JAR here
+    include("*.jar")
+    into "D:/Gin/MC-SERVER/plugins"
+}

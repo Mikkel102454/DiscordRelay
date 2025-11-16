@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import miguel.nu.discordRelay.Main;
 import miguel.nu.discordRelay.http.RequestHandler;
+import miguel.nu.discordRelay.utils.ItemJson;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -29,7 +30,7 @@ public class DiscordAPI {
 
         String requestBody = new Gson().toJson(json);
 
-        RequestHandler.sendPost("api/log/whisper", requestBody);
+        RequestHandler.sendPost("api/log/chat_flag", requestBody);
     }
     public static void sendWhisperLog(OfflinePlayer victim, OfflinePlayer responsible, String message){
         JsonObject json = new JsonObject();
@@ -42,7 +43,7 @@ public class DiscordAPI {
 
         RequestHandler.sendPost("api/log/whisper", requestBody);
     }
-    public static void sendDeathLog(OfflinePlayer victim, String message, Location location, Inventory inventory){
+    public static void sendDeathLog(Player victim, String message, Location location){
         JsonObject json = new JsonObject();
         json.addProperty("key", Main.config.getString("secret"));
         json.addProperty("victim", victim.getName());
@@ -57,41 +58,40 @@ public class DiscordAPI {
         json.add("location", locationJson);
 
         JsonArray itemsArray = new JsonArray();
-        for(int i = 0; i < inventory.getSize(); i++){
-            ItemStack item = inventory.getItem(i);
+        for(int i = 0; i < victim.getInventory().getSize(); i++){
+            ItemStack item = victim.getInventory().getItem(i);
             if(item == null || item.getType() == Material.AIR) continue;
-            JsonObject itemJson = new JsonObject();
-            itemJson.addProperty("slot", i);
-            itemJson.addProperty("type", item.getType().name());
-            itemJson.addProperty("amount", item.getAmount());
 
-            ItemMeta meta = item.getItemMeta();
-            if(meta instanceof Damageable){
-                Damageable damageable = (Damageable) meta;
-                int maxDurability = item.getType().getMaxDurability();
-                int used = damageable.getDamage();
-                int remaining = maxDurability - used;
-                itemJson.addProperty("durability", remaining);
-                itemJson.addProperty("max_durability", maxDurability);
-            }
+            itemsArray.add(ItemJson.getItem(i + 1, item));
+        }
+        if (victim.getInventory().getItemInOffHand().getType() != Material.AIR){
+            ItemStack item = victim.getInventory().getItemInOffHand();
 
-            JsonArray enchantsArray = new JsonArray();
-            Map<Enchantment, Integer> enchantments = meta.getEnchants();
-            for(Enchantment enchantment : enchantments.keySet()){
-                int level = enchantments.get(enchantment);
+            itemsArray.add(ItemJson.getItem(37, item));
+        }
+        if (victim.getInventory().getHelmet() != null){
+            ItemStack item = victim.getInventory().getHelmet();
 
-                JsonObject enchantJson = new JsonObject();
-                itemJson.addProperty("name", enchantment.getKey().getKey());
-                itemJson.addProperty("level", level);
+            itemsArray.add(ItemJson.getItem(38, item));
+        }
+        if (victim.getInventory().getChestplate() != null){
+            ItemStack item = victim.getInventory().getChestplate();
 
-                enchantsArray.add(enchantJson);
-            }
-            itemJson.add("enchants", enchantsArray);
-            itemsArray.add(itemJson);
+            itemsArray.add(ItemJson.getItem(39, item));
+        }
+        if (victim.getInventory().getLeggings() != null){
+            ItemStack item = victim.getInventory().getLeggings();
+
+            itemsArray.add(ItemJson.getItem(40, item));
+        }
+        if (victim.getInventory().getBoots() != null){
+            ItemStack item = victim.getInventory().getBoots();
+
+            itemsArray.add(ItemJson.getItem(41, item));
         }
         json.add("inventory", itemsArray);
         String requestBody = new Gson().toJson(json);
 
-        RequestHandler.sendPost("api/log/whisper", requestBody);
+        RequestHandler.sendPost("api/log/death/", requestBody);
     }
 }
